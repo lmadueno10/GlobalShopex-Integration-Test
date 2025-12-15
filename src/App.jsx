@@ -75,7 +75,7 @@ const GlobalShopexCheckout = ({ cartItems }) => {
         style={{ display: 'none' }}
       >
         {/* Required Merchant Parameters */}
-        <input type="hidden" name="MerchantID" value="YOUR_MERCHANT_ID" />
+        <input type="hidden" name="MerchantID" value="2459283" />
         <input type="hidden" name="LocalShipping" value="0.00" />
 
         {/* Dynamic Cart Items */}
