@@ -1,0 +1,104 @@
+ubuntu@ip-172-16-1-58:/var/www/nv2smartdealer.com/GlobalShopex-Integration-Test$ cat /etc/caddy/Caddyfile
+{
+    email webmaster@nv2smartdealer.com
+    
+    # Internal Permission Check (Bypasses Next.js to ensure 200 OK)
+    on_demand_tls {
+        ask http://localhost:5555/check
+    }
+}
+
+# ---------------------------------------------------------
+# NEW: SmartSaaS Backend API (Port 8094)
+# ---------------------------------------------------------
+smartsaas-backend.nv2smartdealer.com {
+    # Use existing Wildcard Certificate
+    tls /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com.fullchain.crt /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com_key.txt
+    
+    reverse_proxy localhost:8094
+}
+
+# ---------------------------------------------------------
+# NEW: SmartSaaS Frontend (Vite Static Build)
+# ---------------------------------------------------------
+smartsaas.nv2smartdealer.com {
+    # Use existing Wildcard Certificate
+    tls /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com.fullchain.crt /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com_key.txt
+    # Root points to the built frontend files
+    # ⚠️ Verify this path matches your build output location
+    root * /var/www/nv2smartdealer.com/smartsaas/saasapp/dist
+    # Enable compression for faster loads
+    encode gzip zstd
+    # SPA Routing: Fallback to index.html for unknown paths
+    try_files {path} /index.html
+    # Static File Server
+    file_server
+}
+
+# ---------------------------------------------------------
+# 1. Admin Panel (Static Build)
+# ---------------------------------------------------------
+admin.nv2smartdealer.com, admin3.nv2smartdealer.com {
+    # Use existing Wildcard Certificate (Combined Bundle)
+    tls /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com.fullchain.crt /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com_key.txt
+    
+    root * /var/www/nv2smartdealer.com/envyv2/V2/frontend/Dashboard/build
+    file_server
+    try_files {path} /index.html
+}
+
+# ---------------------------------------------------------
+# 2. Main Subdomains (e.g. isuzu12.nv2smartdealer.com)
+# ---------------------------------------------------------
+*.nv2smartdealer.com {
+    # Use existing Wildcard Certificate (Combined Bundle)
+    tls /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com.fullchain.crt /home/ubuntu/ssl/nv2smartdealer.com/STAR.nv2smartdealer.com_key.txt
+    
+    reverse_proxy localhost:8092 {
+        header_up Host {host}
+    }
+}
+
+# ---------------------------------------------------------
+# Test Domain for GlobalShopex Integration
+# ---------------------------------------------------------
+repuestosahora.com {
+    tls {
+        on_demand
+    }
+    
+    # Proxy to the running Next.js application on Port 8094
+    reverse_proxy localhost:8095
+}
+
+# ---------------------------------------------------------
+# TEMP: Isolated HTTP Test Port (8080)
+# Serves the Next.js app over HTTP for iframe testing
+# ---------------------------------------------------------
+:8080 {
+    # Proxy to the running Next.js application on Port 8094
+    reverse_proxy localhost:8095
+}
+
+# ---------------------------------------------------------
+# 3. Customer Domains (Catch-All)
+# ---------------------------------------------------------
+:443 {
+    # Automatic SSL (On-Demand)
+    tls {
+        on_demand
+    }
+
+    # Proxy to Next.js Multi-Tenant App
+    reverse_proxy localhost:8092 {
+        header_up Host {host}
+    }
+}
+
+# ---------------------------------------------------------
+# 4. Internal "Ask" Endpoint
+# ---------------------------------------------------------
+:5555 {
+    # Always returns 200 to allow Caddy to issue certs
+    respond /check 200
+}
