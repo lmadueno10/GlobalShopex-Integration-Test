@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     return [
       {
         // CSP relajada SOLO para el checkout (iframe)
-        source: "/shopping-cart-international-form",
+        source: "/",
         headers: [
           {
             key: "Content-Security-Policy",
