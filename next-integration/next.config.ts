@@ -4,8 +4,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/ShoppingCartInternational.html',
-        destination: '/result',
+        source: "/ShoppingCartInternational.html",
+        destination: "/shopping-cart-international",
+      },
+      {
+        source: "/ShoppingCartInternationalForm.html",
+        destination: "/shopping-cart-international-form",
       },
     ];
   },
@@ -13,8 +17,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // CSP relajada SOLO para el checkout (iframe)
-        source: "/",
+        source: "/shopping-cart-international-form",
         headers: [
           {
             key: "Content-Security-Policy",
